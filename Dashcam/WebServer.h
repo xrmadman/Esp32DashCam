@@ -3,7 +3,6 @@
 
 namespace WebServer {
 void initServer();
-void handleClient();
 }
 
 #endif

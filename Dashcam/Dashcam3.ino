@@ -1,28 +1,38 @@
-#include "WiFiManager.h"
-#include "FileManager.h"
-#include "WebServer.h"
+#include <Arduino.h>
 #include "CameraControl.h"
+#include "WebServer.h"
+#include "WiFiManager.h"
+#include <SD_MMC.h>
+#include <ESPmDNS.h>
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
-  if (!WiFiManager::initWiFi()) {
-    Serial.println("Wi-Fi initialization failed.");
-  }
-
-  if (!FileManager::initSDCard()) {
-    Serial.println("SD card initialization failed.");
-  }
+  Serial.println("Starting ESP32-CAM Dashcam...");
 
   if (!CameraControl::initCamera()) {
-    Serial.println("Camera initialization failed.");
+    Serial.println("[ERROR] Restarting ESP32-CAM...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  Serial.println("Initializing SD Card...");
+  if (!SD_MMC.begin()) {
+    Serial.println("[ERROR] Failed to initialize SD card!");
+  } else {
+    Serial.println("[OK] SD Card Initialized.");
+  }
+
+  WiFiManager::initWiFi();
+
+  if (MDNS.begin("dashcam")) {
+    Serial.println("[OK] mDNS responder started (dashcam.local)");
   }
 
   WebServer::initServer();
-  Serial.println("Setup complete.");
+
+  CameraControl::startRecording();
 }
 
 void loop() {
-  WebServer::handleClient();
+  delay(10);
 }
